@@ -3,6 +3,7 @@ import { Rate, Row, Col, Tag, ConfigProvider, Typography, Empty } from 'antd'
 import { format } from 'date-fns'
 
 import trimStr from '../../utils/trimStr'
+import roundToNearestHalf from '../../utils/nearestHalfNumber'
 
 import './FilmCard.scss'
 
@@ -12,7 +13,7 @@ const { Paragraph } = Typography
 
 export default function FilmCard(props) {
   const { film } = props
-  const { title, release_date: releaseDate, overview, poster_path: posterPath } = film
+  const { title, release_date: releaseDate, overview, poster_path: posterPath, vote_average: voteAverage } = film
   return (
     <div className="film-card">
       <div className="film-card__posterWrapper">
@@ -23,11 +24,14 @@ export default function FilmCard(props) {
         )}
       </div>
       <div className="film-card__description">
-        <Paragraph style={{ marginBottom: 7 }} className="film-card__title">
-          {title}
-        </Paragraph>
+        <div className="film-card__title-wrapper">
+          <Paragraph style={{ marginBottom: 7 }} className="film-card__title">
+            {title}
+          </Paragraph>
+          <div className="film-card__average-vote">{voteAverage ? voteAverage.toFixed(1) : 0}</div>
+        </div>
         <Paragraph style={{ marginBottom: 7 }} className="film-card__date">
-          {format(new Date(releaseDate), 'MMMM d, yyyy')}
+          {releaseDate ? format(new Date(releaseDate), 'MMMM d, yyyy') : null}
         </Paragraph>
         <ConfigProvider
           theme={{
@@ -55,7 +59,7 @@ export default function FilmCard(props) {
             },
           }}
         >
-          <Rate className="film-card__rate" allowHalf defaultValue={2.5} count={10} disabled />
+          <Rate className="film-card__stars" allowHalf defaultValue={roundToNearestHalf(voteAverage)} count={10} />
         </ConfigProvider>
       </div>
     </div>

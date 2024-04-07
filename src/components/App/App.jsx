@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unused-state */
 import React from 'react'
-import { List } from 'antd'
+import { List, Spin } from 'antd'
 
 import FilmCard from '../FilmCard'
 
@@ -56,7 +56,7 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
-    getMoviesByKeyWord('funny').then(
+    getMoviesByKeyWord('superman').then(
       (response) => {
         this.setState({
           films: response.results,
@@ -76,18 +76,20 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { films } = this.state
+    const { films, isLoaded } = this.state
     return (
       <div className="wrapper">
-        <List
-          grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
-          dataSource={films}
-          renderItem={(film) => (
-            <List.Item>
-              <FilmCard film={film} />
-            </List.Item>
-          )}
-        />
+        <Spin spinning={!isLoaded}>
+          <List
+            grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
+            dataSource={films}
+            renderItem={(film) => (
+              <List.Item>
+                <FilmCard film={film} />
+              </List.Item>
+            )}
+          />
+        </Spin>
       </div>
     )
   }

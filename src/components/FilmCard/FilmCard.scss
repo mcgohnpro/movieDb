@@ -25,10 +25,30 @@
     flex-direction: column;
   }
 
+  &__genresWrappper {
+    margin-bottom: 12px;
+  }
+
   &__poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  &__average-vote {
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    border: 2px solid #e9d100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  &__title-wrapper {
+    display: flex;
+    justify-content: space-between;
   }
   &__title {
     font-size: 20px;
@@ -37,7 +57,7 @@
     font-size: 12px;
     line-height: 22px;
   }
-  &__rate {
+  &__stars {
     margin-top: auto;
   }
 }
