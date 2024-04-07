@@ -1,0 +1,14 @@
+body {
+  background-color: #f7f7f7;
+  margin: 0;
+}
+.wrapper {
+  min-height: 100vh;
+  box-sizing: border-box;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 21px 32px;
+  @media (min-width: 1010px) {
+    width: 1010px;
+  }
+}
