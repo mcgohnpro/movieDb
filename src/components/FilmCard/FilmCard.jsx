@@ -2,8 +2,7 @@
 import { Rate, Row, Col, Tag, ConfigProvider, Typography, Empty } from 'antd'
 import { format } from 'date-fns'
 
-import trimStr from '../../utils/trimStr'
-import roundToNearestHalf from '../../utils/nearestHalfNumber'
+import { roundToNearestHalf, trimStr } from '../../services/utils'
 
 import './FilmCard.scss'
 

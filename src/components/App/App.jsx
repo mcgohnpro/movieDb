@@ -1,49 +1,31 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unused-state */
 import React from 'react'
 import { List, Spin } from 'antd'
 
+import AlertMessage from '../Alert'
+import ApiMovieDb from '../../services/api'
 import FilmCard from '../FilmCard'
 
 import './App.scss'
 
-const options = {
-  method: 'GET',
-  headers: {
-    accept: 'application/json',
-    Authorization:
-      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZWUxMjNiNDkwOWVlYmRhN2FlYmJlMGVhNjhjNWM5MyIsInN1YiI6IjY2MTI5MDE0NjdkY2M5MDE0OTliNjQzZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nQEtdCo0nxMYS490fHN4iwblr_9M6G43gltNDaGkLdA',
-  },
-}
-
-function getMoviesByKeyWord(word = 'return') {
-  const url = new URL('https://api.themoviedb.org/3/search/movie')
-  url.searchParams.set('query', word)
-  url.searchParams.set('include_adult', false)
-  url.searchParams.set('language', 'en-US')
-  return fetch(url, options)
-    .then((response) => response.json())
-    .catch((err) => err)
-}
 // заготовка для получения жанров, скорее всего получение жанров надо буудет переместить в другое место
 // функция преобразовывает полученыый массив объектов в объект {id: жанр, id: жанр}
 // возвращает ппромис
-function getGenresList() {
-  const url = new URL('https://api.themoviedb.org/3/genre/movie/list')
-  url.searchParams.set('language', 'en')
-  return fetch(url, options)
-    .then((response) => response.json())
-    .then((data) => {
-      return new Promise((resolve, reject) => {
-        const res = data.genres.reduce((acc, item) => {
-          acc[item.id] = item.name
-          return acc
-        }, {})
-
-        resolve(res)
-      })
-    })
-}
+// function getGenresList() {
+//   const url = new URL('https://api.themoviedb.org/3/genre/movie/list')
+//   url.searchParams.set('language', 'en')
+//   return fetch(url, options)
+//     .then((response) => response.json())
+//     .then((data) => {
+//       return new Promise((resolve, reject) => {
+//         const res = data.genres.reduce((acc, item) => {
+//           acc[item.id] = item.name
+//           return acc
+//         }, {})
+//         resolve(res)
+//       })
+//     })
+// }
 
 export default class App extends React.Component {
   constructor(props) {
@@ -52,33 +34,46 @@ export default class App extends React.Component {
       films: [],
       error: null,
       isLoaded: false,
+      isOnline: navigator.onLine,
     }
+    this.isOnlineHendler = () => {
+      this.setState({
+        isOnline: navigator.onLine,
+      })
+    }
+    this.api = new ApiMovieDb()
+    window.addEventListener('online', this.isOnlineHendler)
+    window.addEventListener('offline', this.isOnlineHendler)
   }
 
   componentDidMount() {
-    getMoviesByKeyWord('superman').then(
-      (response) => {
+    this.api
+      .getMovieByKeyWord('spiderman')
+      .then(({ results, page, total_pages: totalPages, total_results: totalResults }) => {
         this.setState({
-          films: response.results,
-          page: response.page,
-          total_pages: response.total_pages,
-          total_results: response.total_results,
+          films: results,
+          page,
+          totalPages,
+          totalResults,
           isLoaded: true,
         })
-      },
-      (error) => {
+      })
+      .catch(({ message }) => {
         this.setState({
           isLoaded: true,
-          error,
+          error: message,
         })
-      }
-    )
+      })
   }
 
   render() {
-    const { films, isLoaded } = this.state
+    const { films, isLoaded, error, isOnline } = this.state
+    const alert = error ? <AlertMessage type="warning" error={error} /> : null
+    const badConnection = !isOnline ? <AlertMessage type="error" error="There is no network connectivity" /> : null
     return (
       <div className="wrapper">
+        {badConnection}
+        {alert}
         <Spin spinning={!isLoaded}>
           <List
             grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
