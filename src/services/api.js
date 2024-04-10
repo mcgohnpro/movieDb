@@ -13,11 +13,13 @@ export default class ApiMovieDb {
     }
   }
 
-  getMovieByKeyWord(word = 'spiderman') {
+  getMovieByKeyWord(word = 'spiderman', page = 1) {
+    this.url.search = ''
     this.url.pathname = '/3/search/movie'
     this.url.searchParams.set('query', word)
     this.url.searchParams.set('include_adult', false)
     this.url.searchParams.set('language', 'en-US')
+    this.url.searchParams.set('page', page)
     return fetch(this.url, this.options).then((response) => {
       if (response.ok) {
         return response.json()
