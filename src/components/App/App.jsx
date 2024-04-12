@@ -100,7 +100,6 @@ export default class App extends React.Component {
 
   render() {
     const { films, isLoaded, error, isOnline, totalPages, page, totalResults } = this.state
-
     const alert = error ? <AlertMessage type="warning" error={error} /> : null
     const badConnection = !isOnline ? <AlertMessage type="error" error="There is no network connectivity" /> : null
     return (
@@ -123,6 +122,7 @@ export default class App extends React.Component {
         <Row justify="center">
           <Col>
             <Pagination
+              disabled={!films.length}
               onChange={this.paginationChangeHandler}
               defaultCurrent={page}
               total={totalResults}

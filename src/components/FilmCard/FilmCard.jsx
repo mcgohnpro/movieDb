@@ -5,25 +5,24 @@ import { format } from 'date-fns'
 import Poster from '../Poster'
 import { roundToNearestHalf, trimStr } from '../../services/utils'
 
-import './FilmCard.scss'
+import styles from './FilmCard.module.scss'
 
 const { Paragraph } = Typography
 
 export default function FilmCard(props) {
   const { film } = props
   const { title, release_date: releaseDate, overview, poster_path: posterPath, vote_average: voteAverage } = film
-
   return (
-    <div className="film-card">
+    <div className={styles['film-card']}>
       <Poster posterPath={posterPath} title={title} />
-      <div className="film-card__description">
-        <div className="film-card__title-wrapper">
-          <Paragraph style={{ marginBottom: 7 }} className="film-card__title">
+      <div className={styles.description}>
+        <div className={styles['title-wrapper']}>
+          <Paragraph style={{ marginBottom: 7 }} className={styles.title}>
             {title}
           </Paragraph>
-          <div className="film-card__average-vote">{voteAverage ? voteAverage.toFixed(1) : 0}</div>
+          <div className={styles['average-vote']}>{voteAverage ? voteAverage.toFixed(1) : 0}</div>
         </div>
-        <Paragraph style={{ marginBottom: 7 }} className="film-card__date">
+        <Paragraph style={{ marginBottom: 7 }} className={styles.date}>
           {releaseDate ? format(new Date(releaseDate), 'MMMM d, yyyy') : null}
         </Paragraph>
         <ConfigProvider
@@ -35,12 +34,12 @@ export default function FilmCard(props) {
             },
           }}
         >
-          <div className="film-card__genresWrappper">
+          <div className={styles['genres-wrappper']}>
             <Tag>Action</Tag>
             <Tag>Drama</Tag>
           </div>
         </ConfigProvider>
-        <Paragraph className="film-card__overview" style={{ marginBottom: 7 }}>
+        <Paragraph className={styles.overview} style={{ marginBottom: 7 }}>
           {trimStr(overview, 150)}
         </Paragraph>
         <ConfigProvider
@@ -52,7 +51,7 @@ export default function FilmCard(props) {
             },
           }}
         >
-          <Rate className="film-card__stars" allowHalf defaultValue={roundToNearestHalf(voteAverage)} count={10} />
+          <Rate className={styles.stars} allowHalf defaultValue={roundToNearestHalf(voteAverage)} count={10} />
         </ConfigProvider>
       </div>
     </div>

@@ -1,14 +1,11 @@
-.search-film {
+.searchFilm {
   width: 100%;
   box-sizing: border-box;
   height: 40px;
   padding-left: 12px;
   border-color: #d9d9d9;
   border-radius: 5px;
-
-  &--margin {
-    margin-bottom: 34px;
-  }
+  margin-bottom: 34px;
 
   ::placeholder {
     font-size: 16px;
