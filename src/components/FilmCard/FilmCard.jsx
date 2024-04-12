@@ -2,26 +2,20 @@
 import { Rate, Row, Col, Tag, ConfigProvider, Typography, Empty } from 'antd'
 import { format } from 'date-fns'
 
+import Poster from '../Poster'
 import { roundToNearestHalf, trimStr } from '../../services/utils'
 
 import './FilmCard.scss'
-
-const URL_POSTER = 'https://image.tmdb.org/t/p/original'
 
 const { Paragraph } = Typography
 
 export default function FilmCard(props) {
   const { film } = props
   const { title, release_date: releaseDate, overview, poster_path: posterPath, vote_average: voteAverage } = film
+
   return (
     <div className="film-card">
-      <div className="film-card__posterWrapper">
-        {posterPath ? (
-          <img className="film-card__poster" src={URL_POSTER + posterPath} alt="q23" />
-        ) : (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        )}
-      </div>
+      <Poster posterPath={posterPath} title={title} />
       <div className="film-card__description">
         <div className="film-card__title-wrapper">
           <Paragraph style={{ marginBottom: 7 }} className="film-card__title">
