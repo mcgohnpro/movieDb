@@ -3,31 +3,13 @@
 import React from 'react'
 import { List, Spin, Pagination, Row, Col } from 'antd'
 
+import { GenresProvider } from '../../services/context'
 import AlertMessage from '../Alert'
 import Search from '../Search'
 import ApiMovieDb from '../../services/api'
 import FilmCard from '../FilmCard'
 
 import './App.scss'
-
-// заготовка для получения жанров, скорее всего получение жанров надо буудет переместить в другое место
-// функция преобразовывает полученыый массив объектов в объект {id: жанр, id: жанр}
-// возвращает ппромис
-// function getGenresList() {
-//   const url = new URL('https://api.themoviedb.org/3/genre/movie/list')
-//   url.searchParams.set('language', 'en')
-//   return fetch(url, options)
-//     .then((response) => response.json())
-//     .then((data) => {
-//       return new Promise((resolve, reject) => {
-//         const res = data.genres.reduce((acc, item) => {
-//           acc[item.id] = item.name
-//           return acc
-//         }, {})
-//         resolve(res)
-//       })
-//     })
-// }
 
 export default class App extends React.Component {
   constructor(props) {
@@ -39,6 +21,7 @@ export default class App extends React.Component {
       isOnline: navigator.onLine,
       searchword: 'spiderman',
       page: 1,
+      genres: [],
     }
     this.isOnlineHendler = () => {
       this.setState({
@@ -55,7 +38,7 @@ export default class App extends React.Component {
           page: 1,
         }
       })
-      this.getFilms(word)
+      this.searchFilms(word)
     }
 
     this.paginationChangeHandler = (currentPage) => {
@@ -65,29 +48,44 @@ export default class App extends React.Component {
           page: currentPage,
         }
       })
-      this.getFilms(searchword, currentPage)
+      this.searchFilms(searchword, currentPage)
     }
   }
 
   componentDidMount() {
-    this.getFilms('spiderman')
+    this.searchFilms('spiderman')
+    this.getGenres()
   }
 
-  getFilms(word, currentPage) {
+  getGenres() {
+    this.api
+      .getGenresList()
+      .then((genres) => {
+        this.setState({
+          genres,
+        })
+      })
+      .catch(({ message }) => {
+        this.setState({
+          isLoaded: true,
+          error: message,
+        })
+      })
+  }
+
+  searchFilms(word, currentPage) {
     this.setState({
       isLoaded: false,
     })
     this.api
       .getMovieByKeyWord(word, currentPage)
       .then(({ results, page = 1, total_pages: totalPages, total_results: totalResults }) => {
-        this.setState(() => {
-          return {
-            films: results,
-            page,
-            totalPages,
-            totalResults,
-            isLoaded: true,
-          }
+        this.setState({
+          films: results,
+          page,
+          totalPages,
+          totalResults,
+          isLoaded: true,
         })
       })
       .catch(({ message }) => {
@@ -99,39 +97,41 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { films, isLoaded, error, isOnline, totalPages, page, totalResults } = this.state
+    const { films, isLoaded, error, isOnline, totalPages, page, totalResults, genres } = this.state
     const alert = error ? <AlertMessage type="warning" error={error} /> : null
     const badConnection = !isOnline ? <AlertMessage type="error" error="There is no network connectivity" /> : null
     return (
-      <div className="wrapper">
-        {badConnection}
-        {alert}
-        <Search searchInputChange={this.searchInputChange} />
-        <Spin spinning={!isLoaded}>
-          <List
-            grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
-            dataSource={films}
-            renderItem={(film) => (
-              <List.Item>
-                <FilmCard film={film} />
-              </List.Item>
-            )}
-          />
-        </Spin>
-
-        <Row justify="center">
-          <Col>
-            <Pagination
-              disabled={!films.length}
-              onChange={this.paginationChangeHandler}
-              defaultCurrent={page}
-              total={totalResults}
-              showSizeChanger={false}
-              pageSize={20}
+      <GenresProvider value={genres}>
+        <div className="wrapper">
+          {badConnection}
+          {alert}
+          <Search searchInputChange={this.searchInputChange} />
+          <Spin spinning={!isLoaded}>
+            <List
+              grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
+              dataSource={films}
+              renderItem={(film) => (
+                <List.Item>
+                  <FilmCard film={film} />
+                </List.Item>
+              )}
             />
-          </Col>
-        </Row>
-      </div>
+          </Spin>
+
+          <Row justify="center">
+            <Col>
+              <Pagination
+                disabled={!films.length}
+                onChange={this.paginationChangeHandler}
+                defaultCurrent={page}
+                total={totalResults}
+                showSizeChanger={false}
+                pageSize={20}
+              />
+            </Col>
+          </Row>
+        </div>
+      </GenresProvider>
     )
   }
 }

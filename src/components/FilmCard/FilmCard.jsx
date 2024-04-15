@@ -1,7 +1,7 @@
-/* eslint-disable no-unused-vars */
-import { Rate, Row, Col, Tag, ConfigProvider, Typography, Empty } from 'antd'
+import { Rate, Tag, ConfigProvider, Typography } from 'antd'
 import { format } from 'date-fns'
 
+import { GenresConsumer } from '../../services/context'
 import Poster from '../Poster'
 import { roundToNearestHalf, trimStr } from '../../services/utils'
 
@@ -11,7 +11,14 @@ const { Paragraph } = Typography
 
 export default function FilmCard(props) {
   const { film } = props
-  const { title, release_date: releaseDate, overview, poster_path: posterPath, vote_average: voteAverage } = film
+  const {
+    title,
+    release_date: releaseDate,
+    overview,
+    poster_path: posterPath,
+    vote_average: voteAverage,
+    genre_ids: genreIds,
+  } = film
   return (
     <div className={styles['film-card']}>
       <Poster posterPath={posterPath} title={title} />
@@ -22,6 +29,7 @@ export default function FilmCard(props) {
           </Paragraph>
           <div className={styles['average-vote']}>{voteAverage ? voteAverage.toFixed(1) : 0}</div>
         </div>
+        {/* TODO попробовать убрать inline стили в класс */}
         <Paragraph style={{ marginBottom: 7 }} className={styles.date}>
           {releaseDate ? format(new Date(releaseDate), 'MMMM d, yyyy') : null}
         </Paragraph>
@@ -34,10 +42,21 @@ export default function FilmCard(props) {
             },
           }}
         >
-          <div className={styles['genres-wrappper']}>
-            <Tag>Action</Tag>
-            <Tag>Drama</Tag>
-          </div>
+          <GenresConsumer>
+            {(genres) => {
+              return (
+                <ul className={styles['genres-wrapper']}>
+                  {genreIds.map((id) => {
+                    return (
+                      <li key={id}>
+                        <Tag>{genres[id]}</Tag>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )
+            }}
+          </GenresConsumer>
         </ConfigProvider>
         <Paragraph className={styles.overview} style={{ marginBottom: 7 }}>
           {trimStr(overview, 150)}

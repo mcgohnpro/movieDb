@@ -1,5 +1,7 @@
+/* eslint-disable no-debugger */
 import ErrorNotFound from './errors'
 
+// TODO Вынести авторизацию в отдельную переменную
 export default class ApiMovieDb {
   constructor() {
     this.url = new URL('https://api.themoviedb.org')
@@ -13,6 +15,26 @@ export default class ApiMovieDb {
     }
   }
 
+  // TODO Сделать параметры запроса через строку шаблонизации
+  // TODO ошибка ErrorNotFound так и не вылетала
+  getGenresList() {
+    this.url.pathname = '/3/genre/movie/list'
+    return fetch(this.url, this.options)
+      .then((response) => {
+        if (response.ok) {
+          return response.json()
+        }
+        throw ErrorNotFound(`Failed to receive data from server, status code ${response.status}`, response)
+      })
+      .then((json) => {
+        return json.genres.reduce((acc, item) => {
+          acc[item.id] = item.name
+          return acc
+        }, {})
+      })
+  }
+
+  // TODO Сделать параметры запроса через строку шаблонизации
   getMovieByKeyWord(word = 'spiderman', page = 1) {
     this.url.search = ''
     this.url.pathname = '/3/search/movie'
@@ -24,7 +46,7 @@ export default class ApiMovieDb {
       if (response.ok) {
         return response.json()
       }
-      throw new ErrorNotFound(`failed to receive data from server, status code ${response.status}`, response)
+      throw new ErrorNotFound(`Failed to receive data from server, status code ${response.status}`, response)
     })
   }
 }
