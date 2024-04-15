@@ -1,25 +1,51 @@
-/* eslint-disable no-debugger */
-import ErrorNotFound from './errors'
+import ErrorNotFound from './errors/ErrorNotFound'
+import ErrorCreateGuestSession from './errors/ErrorCreateGuestSession'
+
+const AUTH =
+  'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZWUxMjNiNDkwOWVlYmRhN2FlYmJlMGVhNjhjNWM5MyIsInN1YiI6IjY2MTI5MDE0NjdkY2M5MDE0OTliNjQzZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nQEtdCo0nxMYS490fHN4iwblr_9M6G43gltNDaGkLdA'
 
 // TODO Вынести авторизацию в отдельную переменную
-export default class ApiMovieDb {
+export default class async {
   constructor() {
-    this.url = new URL('https://api.themoviedb.org')
+    this.APIurl = 'https://api.themoviedb.org'
+    this.sessionId = sessionStorage.getItem('sessionId')
     this.options = {
       method: 'GET',
       headers: {
         accept: 'application/json',
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZWUxMjNiNDkwOWVlYmRhN2FlYmJlMGVhNjhjNWM5MyIsInN1YiI6IjY2MTI5MDE0NjdkY2M5MDE0OTliNjQzZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nQEtdCo0nxMYS490fHN4iwblr_9M6G43gltNDaGkLdA',
+        Authorization: AUTH,
       },
     }
   }
 
-  // TODO Сделать параметры запроса через строку шаблонизации
+  async getSessionId() {
+    if (this.sessionId) {
+      return this.sessionId
+    }
+    const response = await fetch(`${this.APIurl}/3/authentication/guest_session/new`, this.options)
+    const json = await response.json()
+    if (json.success) {
+      this.sessionId = json.guest_session_id
+      sessionStorage.setItem('sessionId', this.sessionId)
+      return this.sessionId
+    }
+    throw new ErrorCreateGuestSession('Ooops, error to create guest session')
+  }
+
+  async getRatedMovies(page = 1) {
+    const url = `${this.APIurl}/3/guest_session/${this.sessionId}/rated/movies?language=en-US&page=${page}&sort_by=created_at.asc`
+    const response = await fetch(url, this.options)
+    if (response.ok) {
+      const ratedFilms = await response.json()
+      return ratedFilms
+    }
+    return {}
+  }
+
   // TODO ошибка ErrorNotFound так и не вылетала
   getGenresList() {
-    this.url.pathname = '/3/genre/movie/list'
-    return fetch(this.url, this.options)
+    const url = `${this.APIurl}/3/genre/movie/list`
+    return fetch(url, this.options)
       .then((response) => {
         if (response.ok) {
           return response.json()
@@ -35,14 +61,9 @@ export default class ApiMovieDb {
   }
 
   // TODO Сделать параметры запроса через строку шаблонизации
-  getMovieByKeyWord(word = 'spiderman', page = 1) {
-    this.url.search = ''
-    this.url.pathname = '/3/search/movie'
-    this.url.searchParams.set('query', word)
-    this.url.searchParams.set('include_adult', false)
-    this.url.searchParams.set('language', 'en-US')
-    this.url.searchParams.set('page', page)
-    return fetch(this.url, this.options).then((response) => {
+  async getMovieByKeyWord(word = 'spiderman', page = 1) {
+    const url = `${this.APIurl}/3/search/movie?query=${word}&include_adult=false&language=en-US&page=${page}`
+    return fetch(url, this.options).then((response) => {
       if (response.ok) {
         return response.json()
       }

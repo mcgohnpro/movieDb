@@ -4,33 +4,39 @@ import React from 'react'
 import { List, Spin, Pagination, Row, Col } from 'antd'
 
 import { GenresProvider } from '../../services/context'
+import getId from '../../services/getId'
 import AlertMessage from '../Alert'
 import Search from '../Search'
 import ApiMovieDb from '../../services/api'
 import FilmCard from '../FilmCard'
 
 import './App.scss'
-
+// TODO Привести к одному виду названия Films и Movies везде!
 export default class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       films: [],
-      error: null,
+      ratedFilms: [],
+      errors: {},
       isLoaded: false,
       isOnline: navigator.onLine,
       searchword: 'spiderman',
       page: 1,
+      ratedFilmsPage: 1,
       genres: [],
     }
+
     this.isOnlineHendler = () => {
       this.setState({
         isOnline: navigator.onLine,
       })
     }
+
     this.api = new ApiMovieDb()
     window.addEventListener('online', this.isOnlineHendler)
     window.addEventListener('offline', this.isOnlineHendler)
+
     this.searchInputChange = (word) => {
       this.setState(() => {
         return {
@@ -53,8 +59,18 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
+    this.createSessionId()
     this.searchFilms('spiderman')
     this.getGenres()
+    this.getRatedMovies()
+  }
+
+  getRatedMovies() {
+    this.api.getRatedMovies().then((ratedFilms) => {
+      this.setState({
+        ratedFilms,
+      })
+    })
   }
 
   getGenres() {
@@ -65,10 +81,29 @@ export default class App extends React.Component {
           genres,
         })
       })
-      .catch(({ message }) => {
+      .catch(({ name, message }) => {
+        this.setState(({ errors }) => {
+          return {
+            isLoaded: true,
+            errors: { ...errors, [name]: message },
+          }
+        })
+      })
+  }
+
+  createSessionId() {
+    this.api
+      .getSessionId()
+      .then((id) => {
         this.setState({
-          isLoaded: true,
-          error: message,
+          sessionId: id,
+        })
+      })
+      .catch(({ name, message }) => {
+        this.setState(({ errors }) => {
+          return {
+            errors: { ...errors, [name]: message },
+          }
         })
       })
   }
@@ -88,17 +123,21 @@ export default class App extends React.Component {
           isLoaded: true,
         })
       })
-      .catch(({ message }) => {
-        this.setState({
-          isLoaded: true,
-          error: message,
+      .catch(({ name, message }) => {
+        this.setState(({ errors }) => {
+          return {
+            isLoaded: true,
+            errors: { ...errors, [name]: message },
+          }
         })
       })
   }
 
   render() {
-    const { films, isLoaded, error, isOnline, totalPages, page, totalResults, genres } = this.state
-    const alert = error ? <AlertMessage type="warning" error={error} /> : null
+    const { films, isLoaded, errors, isOnline, totalPages, page, totalResults, genres } = this.state
+    const alert = Object.keys.length
+      ? Object.keys(errors).map((error) => <AlertMessage key={getId()} type="warning" error={error} />)
+      : null
     const badConnection = !isOnline ? <AlertMessage type="error" error="There is no network connectivity" /> : null
     return (
       <GenresProvider value={genres}>
