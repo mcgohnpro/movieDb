@@ -1,7 +1,10 @@
+/* eslint-disable no-console */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable no-debugger */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/no-unused-state */
 import React from 'react'
-import { List, Spin, Pagination, Row, Col } from 'antd'
+import { List, Spin, Pagination, Row, Col, Menu } from 'antd'
 
 import { GenresProvider } from '../../services/context'
 import getId from '../../services/getId'
@@ -10,7 +13,7 @@ import Search from '../Search'
 import ApiMovieDb from '../../services/api'
 import FilmCard from '../FilmCard'
 
-import './App.scss'
+import styles from './App.module.scss'
 // TODO Привести к одному виду названия Films и Movies везде!
 export default class App extends React.Component {
   constructor(props) {
@@ -25,8 +28,10 @@ export default class App extends React.Component {
       page: 1,
       ratedFilmsPage: 1,
       genres: [],
+      currentMenuPage: 'search',
     }
 
+    // TODO переработать данный код, видимо isOnline и так держит актуальное состояние сети
     this.isOnlineHendler = () => {
       this.setState({
         isOnline: navigator.onLine,
@@ -36,6 +41,7 @@ export default class App extends React.Component {
     this.api = new ApiMovieDb()
     window.addEventListener('online', this.isOnlineHendler)
     window.addEventListener('offline', this.isOnlineHendler)
+    this.menuChangePageHandler = this.menuChangePageHandler.bind(this)
 
     this.searchInputChange = (word) => {
       this.setState(() => {
@@ -56,21 +62,47 @@ export default class App extends React.Component {
       })
       this.searchFilms(searchword, currentPage)
     }
+
+    this.rateMovieHandler = (id, rate) => {
+      this.api.rateMovie(id, rate)
+    }
+
+    // this.rateMovieHandler = (id, rate) => {
+    //   this.api.rateMovie(id, rate).then(() => {
+    //     this.api.getRatedMovies().then((ratedFilms) => {
+    //       console.log('rated films ', ratedFilms)
+    //       this.setState(() => {
+    //         return {
+    //           ratedFilms: ratedFilms.results,
+    //         }
+    //       })
+    //     })
+    //   })
+    // }
   }
 
   componentDidMount() {
+    console.log('mount')
     this.createSessionId()
     this.searchFilms('spiderman')
     this.getGenres()
     this.getRatedMovies()
   }
 
+  componentDidUpdate() {
+    console.log('update')
+  }
+
+  // TODO проверить catch
   getRatedMovies() {
-    this.api.getRatedMovies().then((ratedFilms) => {
-      this.setState({
-        ratedFilms,
+    this.api
+      .getRatedMovies()
+      .then(({ results }) => {
+        this.setState({
+          ratedFilms: results,
+        })
       })
-    })
+      .catch()
   }
 
   getGenres() {
@@ -89,6 +121,13 @@ export default class App extends React.Component {
           }
         })
       })
+  }
+
+  menuChangePageHandler(page) {
+    this.getRatedMovies()
+    this.setState({
+      currentMenuPage: page.key,
+    })
   }
 
   createSessionId() {
@@ -134,24 +173,46 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { films, isLoaded, errors, isOnline, totalPages, page, totalResults, genres } = this.state
-    const alert = Object.keys.length
-      ? Object.keys(errors).map((error) => <AlertMessage key={getId()} type="warning" error={error} />)
+    const { films, ratedFilms, isLoaded, errors, isOnline, totalPages, page, totalResults, genres, currentMenuPage } =
+      this.state
+    // TODO перенести всё, что связано с ошибками в компонент, передать ошибки пропсами, в том числе и плозое соеднинение
+    const alert = Object.keys(errors).length
+      ? Object.keys(errors).map((name) => <AlertMessage key={getId()} type="warning" error={errors[name]} />)
       : null
     const badConnection = !isOnline ? <AlertMessage type="error" error="There is no network connectivity" /> : null
+
+    const search = currentMenuPage === 'search' ? <Search searchInputChange={this.searchInputChange} /> : null
+
+    const items = [
+      {
+        label: 'Search',
+        key: 'search',
+      },
+      {
+        label: 'Rated',
+        key: 'rated',
+      },
+    ]
     return (
       <GenresProvider value={genres}>
-        <div className="wrapper">
+        <div className={styles.wrapper}>
           {badConnection}
           {alert}
-          <Search searchInputChange={this.searchInputChange} />
+          <Menu
+            className={styles['menu-page']}
+            onClick={this.menuChangePageHandler}
+            selectedKeys={[currentMenuPage]}
+            mode="horizontal"
+            items={items}
+          />
+          {search}
           <Spin spinning={!isLoaded}>
             <List
               grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
-              dataSource={films}
+              dataSource={currentMenuPage === 'search' ? films : ratedFilms}
               renderItem={(film) => (
                 <List.Item>
-                  <FilmCard film={film} />
+                  <FilmCard film={film} rateMovieHandler={this.rateMovieHandler} />
                 </List.Item>
               )}
             />

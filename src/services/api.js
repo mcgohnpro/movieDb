@@ -1,10 +1,11 @@
+/* eslint-disable no-console */
 import ErrorNotFound from './errors/ErrorNotFound'
 import ErrorCreateGuestSession from './errors/ErrorCreateGuestSession'
+import ErrorRateMovie from './errors/ErrorRateMovie'
 
 const AUTH =
   'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZWUxMjNiNDkwOWVlYmRhN2FlYmJlMGVhNjhjNWM5MyIsInN1YiI6IjY2MTI5MDE0NjdkY2M5MDE0OTliNjQzZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.nQEtdCo0nxMYS490fHN4iwblr_9M6G43gltNDaGkLdA'
 
-// TODO Вынести авторизацию в отдельную переменную
 export default class async {
   constructor() {
     this.APIurl = 'https://api.themoviedb.org'
@@ -39,35 +40,51 @@ export default class async {
       const ratedFilms = await response.json()
       return ratedFilms
     }
-    return {}
+    return []
   }
 
-  // TODO ошибка ErrorNotFound так и не вылетала
-  getGenresList() {
+  async getGenresList() {
     const url = `${this.APIurl}/3/genre/movie/list`
-    return fetch(url, this.options)
-      .then((response) => {
-        if (response.ok) {
-          return response.json()
-        }
-        throw ErrorNotFound(`Failed to receive data from server, status code ${response.status}`, response)
-      })
-      .then((json) => {
-        return json.genres.reduce((acc, item) => {
-          acc[item.id] = item.name
-          return acc
-        }, {})
-      })
+    const response = await fetch(url, this.options)
+    if (!response.ok) {
+      throw new ErrorNotFound(`Failed to receive data from server, status code ${response.status}`, response)
+    }
+    const json = await response.json()
+    return json.genres.reduce((acc, item) => {
+      acc[item.id] = item.name
+      return acc
+    }, {})
   }
 
-  // TODO Сделать параметры запроса через строку шаблонизации
   async getMovieByKeyWord(word = 'spiderman', page = 1) {
     const url = `${this.APIurl}/3/search/movie?query=${word}&include_adult=false&language=en-US&page=${page}`
-    return fetch(url, this.options).then((response) => {
-      if (response.ok) {
-        return response.json()
-      }
-      throw new ErrorNotFound(`Failed to receive data from server, status code ${response.status}`, response)
-    })
+    const response = await fetch(url, this.options)
+    if (response.ok) {
+      const json = await response.json()
+      return json
+    }
+    throw new ErrorNotFound(`Failed to receive data from server, status code ${response.status}`, response)
+  }
+
+  async rateMovie(movieId, rate) {
+    console.log(`сработал rateMovie, movieId${movieId}, rate ${rate}`)
+    const options = {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json;charset=utf-8',
+        Authorization: AUTH,
+      },
+      body: `{"value":${rate}}`,
+    }
+
+    const url = `${this.APIurl}/3/movie/${movieId}/rating?guest_session_id=${this.sessionId}`
+    const response = await fetch(url, options)
+    if (response.ok) {
+      const json = await response.json()
+      console.log('json response', json)
+      return json
+    }
+    throw new ErrorRateMovie(`Error rate movie. Status code ${response.status}}`)
   }
 }

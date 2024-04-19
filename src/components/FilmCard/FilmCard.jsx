@@ -1,24 +1,30 @@
+/* eslint-disable no-debugger */
+/* eslint-disable no-unused-vars */
 import { Rate, Tag, ConfigProvider, Typography } from 'antd'
 import { format } from 'date-fns'
 
 import { GenresConsumer } from '../../services/context'
 import Poster from '../Poster'
 import { roundToNearestHalf, trimStr } from '../../services/utils'
+import ErrorRateMovie from '../../services/errors/ErrorRateMovie'
 
 import styles from './FilmCard.module.scss'
 
 const { Paragraph } = Typography
 
 export default function FilmCard(props) {
-  const { film } = props
+  const { film, rateMovieHandler } = props
+  // TODO убрать неиспользуемые стейты
   const {
     title,
     release_date: releaseDate,
     overview,
+    id,
     poster_path: posterPath,
     vote_average: voteAverage,
     genre_ids: genreIds,
   } = film
+
   return (
     <div className={styles['film-card']}>
       <Poster posterPath={posterPath} title={title} />
@@ -33,6 +39,7 @@ export default function FilmCard(props) {
         <Paragraph style={{ marginBottom: 7 }} className={styles.date}>
           {releaseDate ? format(new Date(releaseDate), 'MMMM d, yyyy') : null}
         </Paragraph>
+        {/* TODO надо вынести ConfigProvider его на самый верх */}
         <ConfigProvider
           theme={{
             components: {
@@ -46,10 +53,10 @@ export default function FilmCard(props) {
             {(genres) => {
               return (
                 <ul className={styles['genres-wrapper']}>
-                  {genreIds.map((id) => {
+                  {genreIds.map((idGenres) => {
                     return (
-                      <li key={id}>
-                        <Tag>{genres[id]}</Tag>
+                      <li key={idGenres}>
+                        <Tag>{genres[idGenres]}</Tag>
                       </li>
                     )
                   })}
@@ -70,7 +77,15 @@ export default function FilmCard(props) {
             },
           }}
         >
-          <Rate className={styles.stars} allowHalf defaultValue={roundToNearestHalf(voteAverage)} count={10} />
+          <Rate
+            className={styles.stars}
+            onChange={(rate) => {
+              console.log('сработал обработчик')
+              rateMovieHandler(id, rate)
+            }}
+            allowHalf
+            count={10}
+          />
         </ConfigProvider>
       </div>
     </div>

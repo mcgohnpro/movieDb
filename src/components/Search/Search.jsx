@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import { Component } from 'react'
-import { debounce } from 'lodash'
+import { debounce, values } from 'lodash'
 
 import styles from './Search.module.scss'
 
@@ -15,10 +16,12 @@ export default class Search extends Component {
           value: e.target.value,
         }
       })
-      debounce(() => {
-        searchInputChange(e.target.value)
-      }, 500)()
+      this.debounceSearchInputChange(e.target.value)
     }
+
+    this.debounceSearchInputChange = debounce((value) => {
+      searchInputChange(value)
+    }, 600)
   }
 
   render() {
