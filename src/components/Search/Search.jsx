@@ -1,6 +1,5 @@
-/* eslint-disable no-unused-vars */
 import { Component } from 'react'
-import { debounce, values } from 'lodash'
+import { debounce } from 'lodash'
 
 import styles from './Search.module.scss'
 
@@ -26,6 +25,8 @@ export default class Search extends Component {
 
   render() {
     const { value } = this.state
+    const { currentMenuPage } = this.props
+    if (currentMenuPage === 'rated') return null
     return (
       <input
         value={value}

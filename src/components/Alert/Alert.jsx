@@ -1,7 +1,11 @@
-import { Space, Alert } from 'antd'
+import { Space, Alert as AntdAlert } from 'antd'
 
-export default function AlertMessage(props) {
-  const { error, type } = props
+export default function Alert(props) {
+  const { errors, isOnline } = props
+  const alerts = Object.keys(errors).map((name) => (
+    <AntdAlert key={name} message={errors[name]} type="warning" closable />
+  ))
+
   return (
     <Space
       direction="vertical"
@@ -13,7 +17,8 @@ export default function AlertMessage(props) {
         right: 0,
       }}
     >
-      <Alert message={error} type={type} showIcon closable />
+      {alerts}
+      {!isOnline ? <AntdAlert type="error" message="There is no network connectivity" closable /> : null}
     </Space>
   )
 }

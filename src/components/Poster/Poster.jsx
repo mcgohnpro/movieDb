@@ -1,21 +1,19 @@
 import { Empty } from 'antd'
 
-import styles from './Poster.module.scss'
+import { URL_POSTERS } from '../../services/api'
 
-const URL_POSTER = 'https://image.tmdb.org/t/p/original'
+import styles from './Poster.module.scss'
 
 export default function Poster(props) {
   const { posterPath, title } = props
-  const poster = posterPath ? (
+  return posterPath ? (
     <img
       className={styles.poster}
-      src={URL_POSTER + posterPath}
+      src={URL_POSTERS + posterPath}
       alt={`Poster for the movie "${title}"`}
       loading="lazy"
     />
   ) : (
-    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    <Empty className={styles.poster} image={Empty.PRESENTED_IMAGE_SIMPLE} />
   )
-
-  return <div className={styles.posterWrapper}>{poster}</div>
 }

@@ -1,37 +1,33 @@
-/* eslint-disable no-console */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable no-debugger */
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/no-unused-state */
 import React from 'react'
-import { List, Spin, Pagination, Row, Col, Menu } from 'antd'
+import { List, Spin, Pagination, Row, Col } from 'antd'
 
 import { GenresProvider } from '../../services/context'
-import getId from '../../services/getId'
-import AlertMessage from '../Alert'
 import Search from '../Search'
 import ApiMovieDb from '../../services/api'
-import FilmCard from '../FilmCard'
+import MovieCard from '../MovieCard/MovieCard'
+import Menu from '../Menu'
+import { getRatings } from '../../services/utils'
+import Alert from '../Alert'
 
 import styles from './App.module.scss'
-// TODO Привести к одному виду названия Films и Movies везде!
+
 export default class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      films: [],
-      ratedFilms: [],
+      movies: [],
+      ratedMovies: [],
       errors: {},
       isLoaded: false,
       isOnline: navigator.onLine,
       searchword: 'spiderman',
       page: 1,
-      ratedFilmsPage: 1,
+      ratedMoviesPage: 1,
       genres: [],
       currentMenuPage: 'search',
+      ratings: {},
     }
 
-    // TODO переработать данный код, видимо isOnline и так держит актуальное состояние сети
     this.isOnlineHendler = () => {
       this.setState({
         isOnline: navigator.onLine,
@@ -50,7 +46,7 @@ export default class App extends React.Component {
           page: 1,
         }
       })
-      this.searchFilms(word)
+      this.searchMovies(word)
     }
 
     this.paginationChangeHandler = (currentPage) => {
@@ -60,49 +56,73 @@ export default class App extends React.Component {
           page: currentPage,
         }
       })
-      this.searchFilms(searchword, currentPage)
+      this.searchMovies(searchword, currentPage)
     }
 
-    this.rateMovieHandler = (id, rate) => {
-      this.api.rateMovie(id, rate)
+    this.paginationChangeRatedMoviesHandler = (currentPage) => {
+      this.setState({
+        ratedMoviesPage: currentPage,
+      })
+      this.getRatedMovies(currentPage)
     }
 
-    // this.rateMovieHandler = (id, rate) => {
-    //   this.api.rateMovie(id, rate).then(() => {
-    //     this.api.getRatedMovies().then((ratedFilms) => {
-    //       console.log('rated films ', ratedFilms)
-    //       this.setState(() => {
-    //         return {
-    //           ratedFilms: ratedFilms.results,
-    //         }
-    //       })
-    //     })
-    //   })
-    // }
+    this.rateMovieHandler = async (id, rate) => {
+      if (rate) {
+        const result = await this.api.rateMovie(id, rate)
+        if (result) {
+          this.setState((prevState) => {
+            const { ratings } = prevState
+            return {
+              ratings: { ...ratings, [id]: rate },
+            }
+          })
+        }
+      } else {
+        const result = await this.api.removeRateMovie(id)
+        if (result) {
+          this.setState((prevState) => {
+            const { ratings } = prevState
+            delete ratings[id]
+            return {
+              ratings,
+            }
+          })
+        }
+        setTimeout(() => {
+          this.getRatedMovies()
+        }, 600)
+      }
+    }
   }
 
   componentDidMount() {
-    console.log('mount')
-    this.createSessionId()
-    this.searchFilms('spiderman')
-    this.getGenres()
-    this.getRatedMovies()
-  }
-
-  componentDidUpdate() {
-    console.log('update')
-  }
-
-  // TODO проверить catch
-  getRatedMovies() {
     this.api
-      .getRatedMovies()
-      .then(({ results }) => {
-        this.setState({
-          ratedFilms: results,
+      .getSessionId()
+      .then(() => {
+        this.searchMovies('spiderman')
+        this.getGenres()
+        this.api.getRatedMovies().then(({ results }) => {
+          this.setState({
+            ratings: getRatings(results),
+          })
         })
       })
-      .catch()
+      .catch(({ name, message }) => {
+        this.setState(({ errors }) => {
+          return {
+            isLoaded: true,
+            errors: { ...errors, [name]: message },
+          }
+        })
+      })
+  }
+
+  async getRatedMovies(page) {
+    const { results, total_results: totalCountRatedMovies } = await this.api.getRatedMovies(page)
+    this.setState({
+      ratedMovies: results,
+      totalCountRatedMovies,
+    })
   }
 
   getGenres() {
@@ -124,41 +144,29 @@ export default class App extends React.Component {
   }
 
   menuChangePageHandler(page) {
-    this.getRatedMovies()
+    if (page.key === 'rated') {
+      this.setState({ isLoaded: false })
+      this.getRatedMovies().then(() => {
+        this.setState({ isLoaded: true })
+      })
+    }
+
     this.setState({
       currentMenuPage: page.key,
     })
   }
 
-  createSessionId() {
-    this.api
-      .getSessionId()
-      .then((id) => {
-        this.setState({
-          sessionId: id,
-        })
-      })
-      .catch(({ name, message }) => {
-        this.setState(({ errors }) => {
-          return {
-            errors: { ...errors, [name]: message },
-          }
-        })
-      })
-  }
-
-  searchFilms(word, currentPage) {
+  searchMovies(word, currentPage) {
     this.setState({
       isLoaded: false,
     })
     this.api
       .getMovieByKeyWord(word, currentPage)
-      .then(({ results, page = 1, total_pages: totalPages, total_results: totalResults }) => {
+      .then(({ results, page = 1, total_results: totalCountMovies }) => {
         this.setState({
-          films: results,
+          movies: results,
           page,
-          totalPages,
-          totalResults,
+          totalCountMovies,
           isLoaded: true,
         })
       })
@@ -173,46 +181,34 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { films, ratedFilms, isLoaded, errors, isOnline, totalPages, page, totalResults, genres, currentMenuPage } =
-      this.state
-    // TODO перенести всё, что связано с ошибками в компонент, передать ошибки пропсами, в том числе и плозое соеднинение
-    const alert = Object.keys(errors).length
-      ? Object.keys(errors).map((name) => <AlertMessage key={getId()} type="warning" error={errors[name]} />)
-      : null
-    const badConnection = !isOnline ? <AlertMessage type="error" error="There is no network connectivity" /> : null
+    const {
+      movies,
+      ratedMovies,
+      isLoaded,
+      errors,
+      isOnline,
+      page,
+      ratedMoviesPage,
+      totalCountMovies,
+      totalCountRatedMovies,
+      genres,
+      currentMenuPage,
+      ratings,
+    } = this.state
 
-    const search = currentMenuPage === 'search' ? <Search searchInputChange={this.searchInputChange} /> : null
-
-    const items = [
-      {
-        label: 'Search',
-        key: 'search',
-      },
-      {
-        label: 'Rated',
-        key: 'rated',
-      },
-    ]
     return (
       <GenresProvider value={genres}>
         <div className={styles.wrapper}>
-          {badConnection}
-          {alert}
-          <Menu
-            className={styles['menu-page']}
-            onClick={this.menuChangePageHandler}
-            selectedKeys={[currentMenuPage]}
-            mode="horizontal"
-            items={items}
-          />
-          {search}
+          <Alert errors={errors} isOnline={isOnline} />
+          <Menu menuChangePageHandler={this.menuChangePageHandler} currentMenuPage={currentMenuPage} />
+          <Search searchInputChange={this.searchInputChange} currentMenuPage={currentMenuPage} />
           <Spin spinning={!isLoaded}>
             <List
               grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
-              dataSource={currentMenuPage === 'search' ? films : ratedFilms}
-              renderItem={(film) => (
-                <List.Item>
-                  <FilmCard film={film} rateMovieHandler={this.rateMovieHandler} />
+              dataSource={currentMenuPage === 'search' ? movies : ratedMovies}
+              renderItem={(movie) => (
+                <List.Item key={movie.id}>
+                  <MovieCard movie={movie} rateMovieHandler={this.rateMovieHandler} ratings={ratings} />
                 </List.Item>
               )}
             />
@@ -221,10 +217,12 @@ export default class App extends React.Component {
           <Row justify="center">
             <Col>
               <Pagination
-                disabled={!films.length}
-                onChange={this.paginationChangeHandler}
-                defaultCurrent={page}
-                total={totalResults}
+                disabled={!movies.length}
+                onChange={
+                  currentMenuPage === 'search' ? this.paginationChangeHandler : this.paginationChangeRatedMoviesHandler
+                }
+                defaultCurrent={currentMenuPage === 'search' ? page : ratedMoviesPage}
+                total={currentMenuPage === 'search' ? totalCountMovies : totalCountRatedMovies}
                 showSizeChanger={false}
                 pageSize={20}
               />

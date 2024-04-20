@@ -2,7 +2,7 @@
   width: 30px;
   height: 30px;
   border-radius: 100%;
-  border: 2px solid #e9d100;
+  border: 2px solid;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,12 +24,11 @@
   flex-direction: column;
 }
 
-.film-card {
+.movie-card {
   height: 300px;
-  min-width: 350px;
   box-sizing: border-box;
   box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
-  max-width: 450px;
+  width: 450px;
   margin: 0 auto;
   display: flex;
 }
