@@ -67,62 +67,100 @@ export default class App extends React.Component {
     }
 
     this.rateMovieHandler = async (id, rate) => {
-      if (rate) {
-        const result = await this.api.rateMovie(id, rate)
-        if (result) {
-          this.setState((prevState) => {
-            const { ratings } = prevState
+      const { ratedMoviesPage } = this.state
+      if (rate !== 0) {
+        try {
+          const result = await this.api.rateMovie(id, rate)
+          if (result) {
+            this.setState((prevState) => {
+              const { ratings } = prevState
+              return {
+                ratings: { ...ratings, [id]: rate },
+              }
+            })
+          }
+        } catch (error) {
+          const { name, message } = error
+          this.setState(({ errors }) => {
             return {
-              ratings: { ...ratings, [id]: rate },
-            }
-          })
-        }
-      } else {
-        const result = await this.api.removeRateMovie(id)
-        if (result) {
-          this.setState((prevState) => {
-            const { ratings } = prevState
-            delete ratings[id]
-            return {
-              ratings,
+              isLoaded: true,
+              errors: { ...errors, [name]: message },
             }
           })
         }
         setTimeout(() => {
-          this.getRatedMovies()
-        }, 600)
+          this.getRatedMovies(ratedMoviesPage)
+        }, 700)
+      } else {
+        try {
+          const result = await this.api.removeRateMovie(id)
+          if (result) {
+            this.setState((prevState) => {
+              const { ratings } = prevState
+              const newRatings = { ...ratings }
+              delete newRatings[id]
+              return {
+                ratings: newRatings,
+              }
+            })
+          }
+        } catch (error) {
+          const { name, message } = error
+          this.setState(({ errors }) => {
+            return {
+              isLoaded: true,
+              errors: { ...errors, [name]: message },
+            }
+          })
+        }
+
+        setTimeout(() => {
+          this.getRatedMovies(ratedMoviesPage)
+        }, 700)
       }
     }
   }
 
-  componentDidMount() {
-    this.api
-      .getSessionId()
-      .then(() => {
-        this.searchMovies('spiderman')
-        this.getGenres()
+  async componentDidMount() {
+    try {
+      await this.api.getSessionId()
+      await Promise.all([
+        this.searchMovies('spiderman'),
+        this.getGenres(),
         this.api.getRatedMovies().then(({ results }) => {
           this.setState({
             ratings: getRatings(results),
           })
-        })
+        }),
+      ])
+      this.setState({ isLoaded: true })
+    } catch (error) {
+      const { name, message } = error
+      this.setState(({ errors }) => {
+        return {
+          isLoaded: true,
+          errors: { ...errors, [name]: message },
+        }
       })
-      .catch(({ name, message }) => {
-        this.setState(({ errors }) => {
-          return {
-            isLoaded: true,
-            errors: { ...errors, [name]: message },
-          }
-        })
-      })
+    }
   }
 
   async getRatedMovies(page) {
-    const { results, total_results: totalCountRatedMovies } = await this.api.getRatedMovies(page)
-    this.setState({
-      ratedMovies: results,
-      totalCountRatedMovies,
-    })
+    try {
+      const { results, total_results: totalCountRatedMovies } = await this.api.getRatedMovies(page)
+      this.setState({
+        ratedMovies: results,
+        totalCountRatedMovies,
+      })
+    } catch (error) {
+      const { name, message } = error
+      this.setState(({ errors }) => {
+        return {
+          isLoaded: true,
+          errors: { ...errors, [name]: message },
+        }
+      })
+    }
   }
 
   getGenres() {
@@ -146,9 +184,18 @@ export default class App extends React.Component {
   menuChangePageHandler(page) {
     if (page.key === 'rated') {
       this.setState({ isLoaded: false })
-      this.getRatedMovies().then(() => {
-        this.setState({ isLoaded: true })
-      })
+      this.getRatedMovies()
+        .then(() => {
+          this.setState({ isLoaded: true })
+        })
+        .catch(({ name, message }) => {
+          this.setState(({ errors }) => {
+            return {
+              isLoaded: true,
+              errors: { ...errors, [name]: message },
+            }
+          })
+        })
     }
 
     this.setState({
@@ -204,7 +251,7 @@ export default class App extends React.Component {
           <Search searchInputChange={this.searchInputChange} currentMenuPage={currentMenuPage} />
           <Spin spinning={!isLoaded}>
             <List
-              grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 2, lg: 2, xl: 2, xxl: 2 }}
+              grid={{ gutter: [32, 16], xs: 1, sm: 1, md: 1, lg: 2, xl: 2, xxl: 2 }}
               dataSource={currentMenuPage === 'search' ? movies : ratedMovies}
               renderItem={(movie) => (
                 <List.Item key={movie.id}>

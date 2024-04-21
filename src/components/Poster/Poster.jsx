@@ -1,4 +1,5 @@
 import { Empty } from 'antd'
+import PropTypes from 'prop-types'
 
 import { URL_POSTERS } from '../../services/api'
 
@@ -16,4 +17,14 @@ export default function Poster(props) {
   ) : (
     <Empty className={styles.poster} image={Empty.PRESENTED_IMAGE_SIMPLE} />
   )
+}
+
+Poster.defaultProps = {
+  posterPath: '',
+  title: '',
+}
+
+Poster.protoTypes = {
+  posterPath: PropTypes.string,
+  title: PropTypes.string,
 }

@@ -1,4 +1,5 @@
 import { Menu as AntdMenu } from 'antd'
+import PropTypes from 'prop-types'
 
 import styles from './Menu.module.scss'
 
@@ -24,4 +25,14 @@ export default function Menu(props) {
       items={items}
     />
   )
+}
+
+Menu.defaultProps = {
+  menuChangePageHandler: () => {},
+  currentMenuPage: 'search',
+}
+
+Menu.propTypes = {
+  menuChangePageHandler: PropTypes.func,
+  currentMenuPage: PropTypes.oneOf(['search', 'rated']),
 }

@@ -1,10 +1,11 @@
 import { Component } from 'react'
 import { Rate, Tag, Typography } from 'antd'
 import { format } from 'date-fns'
+import PropTypes from 'prop-types'
 
 import { GenresConsumer } from '../../services/context'
-import Poster from '../Poster'
 import { trimStr, colorizeVote } from '../../services/utils'
+import Poster from '../Poster'
 
 import AntdStyleSettings from './AntdStyleSettings'
 import styles from './MovieCard.module.scss'
@@ -16,7 +17,6 @@ export default class MovieCard extends Component {
     super(props)
     const { ratings } = props
     const { id } = props.movie
-
     this.state = {
       rating: ratings[id],
     }
@@ -48,11 +48,8 @@ export default class MovieCard extends Component {
       <div className={styles['movie-card']}>
         <AntdStyleSettings>
           <Poster className={styles.poster} posterPath={posterPath} title={title} />
-          {/* <div className={styles.description}> */}
           <div className={styles['title-wrapper']}>
-            <Paragraph style={{ marginBottom: 7 }} className={styles.title}>
-              {trimStr(title, 45)}
-            </Paragraph>
+            <p className={styles.title}>{trimStr(title, 45)}</p>
             <div style={{ borderColor: colorizeVote(voteAverage) }} className={styles['average-vote']}>
               {voteAverage ? voteAverage.toFixed(1) : 0}
             </div>
@@ -88,9 +85,20 @@ export default class MovieCard extends Component {
             allowHalf
             count={10}
           />
-          {/* </div> */}
         </AntdStyleSettings>
       </div>
     )
   }
+}
+
+MovieCard.defaultProps = {
+  movie: {},
+  rateMovieHandler: () => {},
+  ratings: {},
+}
+
+MovieCard.propTypes = {
+  movie: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.array, PropTypes.bool, PropTypes.number])),
+  rateMovieHandler: PropTypes.func,
+  ratings: PropTypes.objectOf(PropTypes.number),
 }

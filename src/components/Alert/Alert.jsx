@@ -1,4 +1,5 @@
 import { Space, Alert as AntdAlert } from 'antd'
+import PropTypes from 'prop-types'
 
 export default function Alert(props) {
   const { errors, isOnline } = props
@@ -21,4 +22,14 @@ export default function Alert(props) {
       {!isOnline ? <AntdAlert type="error" message="There is no network connectivity" closable /> : null}
     </Space>
   )
+}
+
+Alert.defaultProps = {
+  errors: {},
+  isOnline: true,
+}
+
+Alert.propTypes = {
+  errors: PropTypes.objectOf(PropTypes.string),
+  isOnline: PropTypes.bool,
 }

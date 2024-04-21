@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import { debounce } from 'lodash'
+import PropTypes from 'prop-types'
 
 import styles from './Search.module.scss'
 
@@ -37,4 +38,14 @@ export default class Search extends Component {
       />
     )
   }
+}
+
+Search.defaultProps = {
+  searchInputChange: () => {},
+  currentMenuPage: 'search',
+}
+
+Search.propTypes = {
+  searchInputChange: PropTypes.func,
+  currentMenuPage: PropTypes.oneOf(['search', 'rated']),
 }

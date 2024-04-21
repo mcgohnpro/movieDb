@@ -8,6 +8,9 @@ export default function AntdStyleSettings({ children }) {
           Tag: {
             defaultColor: 'rgba(0,0,0,0.65)',
           },
+          Typography: {
+            titleMarginBottom: 0,
+          },
         },
         token: {
           Rate: {
