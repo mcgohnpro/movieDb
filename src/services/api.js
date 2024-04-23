@@ -7,7 +7,7 @@ const AUTH =
 
 export const URL_POSTERS = 'https://image.tmdb.org/t/p/original'
 
-export default class async {
+export default class MovieDbApi {
   constructor() {
     this.APIurl = 'https://api.themoviedb.org'
     this.sessionId = localStorage.getItem('sessionId')
@@ -26,11 +26,14 @@ export default class async {
     }
     const url = `${this.APIurl}/3/guest_session/${this.sessionId}/rated/movies?language=en-US&page=1&sort_by=created_at.asc`
     const response = await fetch(url, this.options)
-    const json = await response.json()
-    if (json.status_code === 3) {
-      return false
+    if (response.ok) {
+      const json = await response.json()
+      if (json.status_code === 3) {
+        return false
+      }
+      return true
     }
-    return true
+    return false
   }
 
   async getSessionId() {
@@ -38,11 +41,13 @@ export default class async {
       return true
     }
     const response = await fetch(`${this.APIurl}/3/authentication/guest_session/new`, this.options)
-    const json = await response.json()
-    if (json.success) {
-      this.sessionId = json.guest_session_id
-      localStorage.setItem('sessionId', this.sessionId)
-      return true
+    if (response.ok) {
+      const json = await response.json()
+      if (json.success) {
+        this.sessionId = json.guest_session_id
+        localStorage.setItem('sessionId', this.sessionId)
+        return true
+      }
     }
     throw new ErrorCreateGuestSession('Ooops, error to create guest session')
   }
